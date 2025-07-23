@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/kareliaru/Kampus_autotest.git', branch: 'develop'
+                git url: 'https://github.com/kareliaru/Kampus_API_Auto.git', branch: 'develop'
             }
         }
 
