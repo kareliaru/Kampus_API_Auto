@@ -1,0 +1,14 @@
+{
+  "name": "kampus-api-tests",
+  "version": "1.0.0",
+  "description": "API tests for Kampus project",
+ "scripts": {
+  "test": "newman run collections/Kampus_Smoke_User.postman_collection.json --environment environments/KampusENV.postman_environment.json --reporters cli,htmlextra --reporter-htmlextra-export reports/newman-report.html"
+}
+
+,
+  "devDependencies": {
+    "newman": "^5.3.1",
+    "newman-reporter-htmlextra": "^1.21.0"
+  }
+}

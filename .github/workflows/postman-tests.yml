@@ -1,0 +1,118 @@
+# name: Run Postman Tests and Publish Allure Report
+
+# # Триггер workflow — запускать при пуше в ветку develop
+# on:
+#   push:
+#     branches:
+#       - develop
+
+# jobs:
+#   postman-tests:
+#     runs-on: ubuntu-latest  # Используем стандартный образ Ubuntu
+
+#     steps:
+#       #  Клонируем репозиторий с кодом и файлами
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
+
+#       #  Устанавливаем Node.js нужной версии для запуска Newman и других npm-пакетов
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '18'
+
+#       #  Устанавливаем Newman и плагин для генерации Allure отчётов глобально
+#       - name: Install Newman and Allure Reporter
+#         run: |
+#           npm install -g newman
+#           npm install -g newman-reporter-allure
+
+#       #  Запускаем коллекцию Postman с Newman
+#       # Опции:
+#       # --reporters cli,allure — выводим результат в консоль и в Allure-формате
+#       # --reporter-allure-export — указываем папку для сохранения результатов для Allure
+#       - name: Run Postman Collection with Allure Reporter
+#         run: |
+#           newman run "collections/Kampus Smoke User.postman_collection.json" \
+#             --environment "environments/KampusENV.postman_environment.json" \
+#             --reporters cli,allure \
+#             --reporter-allure-export allure-results
+
+#       #  Устанавливаем Allure CLI для генерации HTML отчёта из результатов
+#       - name: Install Allure CLI
+#         run: |
+#           npm install -g allure-commandline --save-dev
+
+#       #  Генерируем готовый к публикации HTML-отчёт Allure из папки с результатами
+#       # --clean — очищаем предыдущие отчёты
+#       # -o allure-report — папка для итогового отчёта
+#       - name: Generate Allure HTML report
+#         run: |
+#           allure generate allure-results --clean -o allure-report
+
+#       #  Публикуем готовый Allure HTML отчёт в ветку gh-pages
+#       # Используем готовое действие peaceiris/actions-gh-pages для публикации на GitHub Pages
+#       # github_token берётся автоматически из секретов
+#       # publish_dir — папка с HTML-файлами для публикации
+#       - name: Deploy Allure report to GitHub Pages
+#         uses: peaceiris/actions-gh-pages@v3
+#         with:
+#           github_token: ${{ secrets.GITHUB_TOKEN }}
+#           publish_dir: allure-report
+
+
+name: Run Postman Tests and Publish HTML Report
+
+ # Триггер: запускать workflow при пуше в ветку develop
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  postman-tests-html:
+    #  Указываем, что job должен запускаться на последней Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+      #  Клонирование репозитория в виртуальное окружение
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      #  Установка Node.js версии 18 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      #  Установка зависимостей newman и html-репортера
+      - name: Install dependencies
+        run: |
+          npm install newman newman-reporter-htmlextra --legacy-peer-deps
+
+      #  Запуск Postman коллекции с HTML-отчётом
+      # `if: always()` гарантирует, что шаг выполнится даже если предыдущий упал
+      - name: Run Postman Collection with HTML Reporter
+        if: always()
+        run: |
+          npx newman run "collections/Kampus_Smoke_User.postman_collection.json" \
+            --environment "environments/KampusENV.postman_environment.json" \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export reports/newman-report.html
+
+      # Подготовка папки с отчётом для публикации на GitHub Pages
+      - name: Prepare folder for GitHub Pages
+        if: always()
+        run: |
+          mkdir -p report-dist
+          cp reports/newman-report.html report-dist/index.html
+
+      #  Публикация отчёта на GitHub Pages (в ветку gh-pages)
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: report-dist
+          publish_branch: gh-pages
+
