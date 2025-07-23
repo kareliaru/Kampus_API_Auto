@@ -1,1 +1,1 @@
-"run: test Push $(date)" 
+"run: 2 test Push $(date)" 
